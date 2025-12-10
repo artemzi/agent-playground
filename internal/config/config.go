@@ -17,6 +17,7 @@ type Config struct {
 	CtxDir       string
 	CtxSizeLimit int
 	CtxFileExt   string
+	SystemPrompt string
 }
 
 func NewConfig() *Config {
@@ -29,6 +30,7 @@ func NewConfig() *Config {
 		CtxDir:       getEnvString("CTX_DIR", "chats"),
 		CtxSizeLimit: getEnvInt("CTX_SIZE_LIMIT", 10000),
 		CtxFileExt:   getEnvString("CTX_FILE_EXT", ".json"),
+		SystemPrompt: getEnvString("SYSTEM_PROMPT", "Ты - умный помощник, который помогает пользователю в его задачах."),
 	}
 
 	return config

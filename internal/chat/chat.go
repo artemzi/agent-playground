@@ -88,6 +88,7 @@ func (c *Chat) sendMessage(message []model.Message) error {
 		Model:  c.cfg.ModelName,
 		Prompt: prompt,
 		Stream: &[]bool{true}[0],
+		System: c.cfg.SystemPrompt,
 		Options: map[string]interface{}{
 			"temperature": c.cfg.Temperature,
 		},
