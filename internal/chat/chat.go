@@ -16,7 +16,7 @@ import (
 )
 
 type AIClient interface {
-	Chat(ctx context.Context, req *api.ChatRequest, fn api.ChatResponseFunc) error
+	Generate(ctx context.Context, req *api.GenerateRequest, fn api.GenerateResponseFunc) error
 }
 
 type Chat struct {
@@ -81,54 +81,46 @@ func (c *Chat) sendMessage(message []model.Message) error {
 		return errors.ErrNoMessages
 	}
 
-	var chatMessages []api.Message
+	prompt := c.buildContextPrompt(message)
 
-	// Добавляем системный промпт
-	if c.cfg.SystemPrompt != "" {
-		chatMessages = append(chatMessages, api.Message{
-			Role:    "system",
-			Content: c.cfg.SystemPrompt,
-		})
-	}
-
-	// Добавляем историю сообщений с учетом лимита
-	start := c.calculateStartIndex(len(message), c.cfg.CtxSizeLimit)
-	for i := start; i < len(message); i++ {
-		msg := message[i]
-		chatMessages = append(chatMessages, api.Message{
-			Role:    msg.Role,
-			Content: msg.Content,
-		})
-	}
-
-	req := &api.ChatRequest{
-		Model:    c.cfg.ModelName,
-		Messages: chatMessages,
-		Stream:   &[]bool{true}[0],
+	req := &api.GenerateRequest{
+		Think:  c.cfg.ThinkValue,
+		Model:  c.cfg.ModelName,
+		Prompt: prompt,
+		Stream: &[]bool{true}[0],
+		System: c.cfg.SystemPrompt,
 		Options: map[string]interface{}{
 			"temperature": c.cfg.Temperature,
 		},
 	}
-
-	// Увеличили таймаут до 5 минут
-	ctx, cancel := context.WithTimeout(context.Background(), 300*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 180*time.Second)
 	defer cancel()
 
 	var response strings.Builder
+	var thinkingStarted bool
 
-	err := c.client.Chat(ctx, req, func(resp api.ChatResponse) error {
-		content := resp.Message.Content
-		if content != "" {
-			fmt.Print(content)
-			response.WriteString(content)
+	err := c.client.Generate(ctx, req, func(resp api.GenerateResponse) error {
+		if resp.Thinking != "" {
+			if !thinkingStarted {
+				fmt.Print(colorGray + "💭 ")
+				thinkingStarted = true
+			}
+			fmt.Print(colorGray + resp.Thinking + colorReset)
+		}
+		if resp.Response != "" {
+			fmt.Print(resp.Response)
+			response.WriteString(resp.Response)
 		}
 		return nil
 	})
 
+	if thinkingStarted {
+		fmt.Print(colorReset + "\n\n")
+	}
+
 	if err != nil {
 		return fmt.Errorf("%w: %v", errors.ErrMessageSend, err)
 	}
-	fmt.Println()
 
 	c.addAIResponse(response.String())
 	c.autoSave()
@@ -217,4 +209,29 @@ func (c *Chat) truncateContent(content string, maxLength int) string {
 		return content[:maxLength] + "..."
 	}
 	return content
+}
+
+func (c *Chat) buildContextPrompt(messages []model.Message) string {
+	if len(messages) == 0 {
+		return ""
+	}
+
+	var builder strings.Builder
+
+	start := c.calculateStartIndex(len(messages), c.cfg.CtxSizeLimit)
+
+	builder.WriteString("Предыдущий контекст беседы:\n")
+	for i := start; i < len(messages)-1; i++ { // -1 чтобы исключить текущее сообщение
+		msg := messages[i]
+		if msg.IsUser() {
+			builder.WriteString(fmt.Sprintf("Пользователь: %s\n", msg.Content))
+		} else {
+			builder.WriteString(fmt.Sprintf("Ассистент: %s\n", msg.Content))
+		}
+	}
+
+	currentMessage := messages[len(messages)-1]
+	builder.WriteString(fmt.Sprintf("\nТекущий вопрос: %s", currentMessage.Content))
+
+	return builder.String()
 }
