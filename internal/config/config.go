@@ -61,6 +61,11 @@ func (c *Config) DisplayConfig() {
 	if c.UseAssistantPrefill {
 		fmt.Printf("  💬 Префилл: %s\n", c.AssistantPrefill)
 	}
+	thinkStatus := "отключен ⚡"
+	if c.ThinkValue.Bool() {
+		thinkStatus = "включен 🧠"
+	}
+	fmt.Printf("  🧠 Режим размышления: %s\n", thinkStatus)
 	fmt.Printf("  🛑 Стоп-последовательности: %v\n", c.StopSequences)
 	fmt.Println()
 }
