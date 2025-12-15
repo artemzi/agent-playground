@@ -83,6 +83,10 @@ func (c *Chat) sendMessage(message []model.Message) error {
 
 	prompt := c.buildContextPrompt(message)
 
+	if c.cfg.UseAssistantPrefill {
+		prompt += "\n\nНачни свой ответ с фразы: " + c.cfg.AssistantPrefill
+	}
+
 	req := &api.GenerateRequest{
 		Think:  c.cfg.ThinkValue,
 		Model:  c.cfg.ModelName,
