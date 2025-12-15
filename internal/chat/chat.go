@@ -26,13 +26,17 @@ type Chat struct {
 }
 
 func NewChat(userName string, cfg *config.Config) (*Chat, error) {
-	if userName == "" {
-		return nil, errors.ErrEmptyInput
-	}
-
 	client, err := api.ClientFromEnvironment()
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", errors.ErrClientInit, err)
+	}
+
+	return NewChatWithClient(userName, cfg, client)
+}
+
+func NewChatWithClient(userName string, cfg *config.Config, client AIClient) (*Chat, error) {
+	if userName == "" {
+		return nil, errors.ErrEmptyInput
 	}
 
 	chatSession, err := session.NewChatSession(userName, cfg)
@@ -211,8 +215,9 @@ func (c *Chat) displayMessage(msg model.Message) {
 }
 
 func (c *Chat) truncateContent(content string, maxLength int) string {
-	if len(content) > maxLength {
-		return content[:maxLength] + "..."
+	runes := []rune(content)
+	if len(runes) > maxLength {
+		return string(runes[:maxLength]) + "..."
 	}
 	return content
 }

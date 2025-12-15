@@ -42,3 +42,45 @@ go run main.go
 3. **Тестировать и изменять код**:
    - Вносите правки в `main.go` и файлы в папке `internal/`.
    - Перезапускайте `go run main.go` для проверки изменений.
+
+### Запуск тестов
+
+```bash
+# Запуск всех тестов
+go test ./...
+
+# Запуск с подробным выводом
+go test ./... -v
+
+# Запуск с отчётом о покрытии
+go test ./... -cover
+
+# Покрытие по пакетам (текущее):
+# - internal/model:   100%
+# - internal/session: 85.7%
+# - internal/config:  52.9%
+# - internal/chat:    22.9%
+```
+
+### Структура проекта
+
+```
+agent/
+├── main.go                    # Точка входа
+├── internal/
+│   ├── chat/                  # Логика чата с LLM
+│   │   ├── chat.go
+│   │   └── chat_test.go
+│   ├── config/                # Конфигурация из .env
+│   │   ├── config.go
+│   │   └── config_test.go
+│   ├── errors/                # Кастомные ошибки
+│   │   └── errors.go
+│   ├── model/                 # Модели данных
+│   │   ├── message.go
+│   │   └── message_test.go
+│   └── session/               # Управление сессиями
+│       ├── session.go
+│       └── session_test.go
+└── chats/                     # Сохранённые чаты (JSON)
+```
