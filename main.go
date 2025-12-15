@@ -16,15 +16,7 @@ func main() {
 		log.Fatal("Ошибка инициализации конфигурации")
 	}
 
-	fmt.Printf("Используем модель: %s\n", cfg.ModelName)
-	fmt.Printf("Температура генерации: %.2f\n", cfg.Temperature)
-	fmt.Printf("Директория контекста: %s\n", cfg.CtxDir)
-	fmt.Printf("Максимальный размер контекста: %d символов\n", cfg.CtxSizeLimit)
-	fmt.Printf("Расширение файлов контекста: %s\n", cfg.CtxFileExt)
-	fmt.Printf("Системный промпт: %s\n", cfg.SystemPrompt)
-	if cfg.UseAssistantPrefill {
-		fmt.Printf("Предварительное сообщение ассистента: %s\n", cfg.AssistantPrefill)
-	}
+	cfg.DisplayConfig()
 
 	userName := getUserName()
 

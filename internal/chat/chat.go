@@ -95,6 +95,8 @@ func (c *Chat) sendMessage(message []model.Message) error {
 		System: c.cfg.SystemPrompt,
 		Options: map[string]interface{}{
 			"temperature": c.cfg.Temperature,
+			"stop":        c.cfg.StopSequences,
+			"num_predict": c.cfg.MaxResponseSize,
 		},
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 180*time.Second)

@@ -2,6 +2,7 @@ package config
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"os"
 	"strconv"
@@ -20,6 +21,8 @@ type Config struct {
 	SystemPrompt        string
 	AssistantPrefill    string
 	UseAssistantPrefill bool
+	StopSequences       []string
+	MaxResponseSize     int
 }
 
 func NewConfig() *Config {
@@ -35,9 +38,31 @@ func NewConfig() *Config {
 		SystemPrompt:        getEnvString("SYSTEM_PROMPT", "Ты - умный помощник, который помогает пользователю в его задачах."),
 		AssistantPrefill:    getEnvString("ASSISTANT_PREFILL", "Хорошо, давайте разберем ваш вопрос. "),
 		UseAssistantPrefill: getEnvBool("USE_ASSISTANT_PREFILL", true),
+		StopSequences:       getEnvStringArray("STOP_SEQUENCES", []string{"Human:", "User:", "Пользователь:"}),
+		MaxResponseSize:     getEnvInt("MAX_RESPONSE_SIZE", 0),
 	}
 
 	return config
+}
+
+func (c *Config) DisplayConfig() {
+	fmt.Println("📋 Текущие настройки:")
+	fmt.Printf("  🤖 Модель: %s\n", c.ModelName)
+	fmt.Printf("  🌡️  Температура: %.1f\n", c.Temperature)
+	fmt.Printf("  📁 Директория чатов: %s\n", c.CtxDir)
+	fmt.Printf("  📏 Лимит контекста: %d символов\n", c.CtxSizeLimit)
+	if c.MaxResponseSize > 0 {
+		fmt.Printf("  📐 Лимит ответа: %d символов\n", c.MaxResponseSize)
+	} else {
+		fmt.Printf("  📐 Лимит ответа: без ограничений\n")
+	}
+	fmt.Printf("  📄 Расширение файлов: %s\n", c.CtxFileExt)
+	fmt.Printf("  🎯 Использовать префилл: %t\n", c.UseAssistantPrefill)
+	if c.UseAssistantPrefill {
+		fmt.Printf("  💬 Префилл: %s\n", c.AssistantPrefill)
+	}
+	fmt.Printf("  🛑 Стоп-последовательности: %v\n", c.StopSequences)
+	fmt.Println()
 }
 
 func getEnvString(key, defaultValue string) string {
@@ -46,6 +71,20 @@ func getEnvString(key, defaultValue string) string {
 	}
 
 	fmt.Printf("Переменная окружения %s не установлена, используем значение по умолчанию: %s\n", key, defaultValue)
+	return defaultValue
+}
+
+func getEnvStringArray(key string, defaultValue []string) []string {
+	if value := os.Getenv(key); value != "" {
+		value = strings.Trim(value, "\"")
+
+		var result []string
+		if err := json.Unmarshal([]byte(value), &result); err == nil {
+			return result
+		}
+		fmt.Printf("Переменная окружения %s имеет некорректный JSON формат, используем значение по умолчанию\n", key)
+	}
+	fmt.Printf("Переменная окружения %s не установлена, используем значение по умолчанию\n", key)
 	return defaultValue
 }
 
