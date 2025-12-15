@@ -20,6 +20,9 @@ go.work.sum
 # Dependency directories
 vendor/
 
+# Chat session files
+chats/
+
 # Environment variables
 .env
 .env.local
